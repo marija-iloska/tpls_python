@@ -1,17 +1,7 @@
 import numpy as np
 from random import sample
 from scipy import linalg
-
-
-# FUNCTION THAT GENERATES DATA
-def generate_data(K, p, T, var_y, var_h, var_t):
-    H = np.random.normal(0, var_h, (T, K))
-    theta = np.random.normal(0, var_t, (K, 1))
-    idx = sample(list(range(1, K)), p)
-    theta[idx] = 0
-    y = np.dot(H, theta) + np.random.normal(0, var_y, (T, 1))
-    return y, H, theta, idx
-
+from make_data import generate_data
 
 # DATA SETTINGS
 T = 50  # Time series length
@@ -101,5 +91,5 @@ def JPLS(y, H, idx, var_y, init):
 
         # TIME UPDATE
 
-    return
+    return theta_store, J_pred
 
