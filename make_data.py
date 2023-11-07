@@ -1,4 +1,5 @@
-
+import numpy as np
+from random import sample
 
 # CREATE DATA FUNCTION
 def generate_data(K, p, T, var_y, var_h, var_t):

@@ -1,11 +1,11 @@
 import numpy as np
-from random import sample
-from scipy import linalg
+import LS_updates as LS
+from scipy import linalg as la
 from make_data import generate_data
 
 # DATA SETTINGS
 T = 50  # Time series length
-K = 5  # Total available features
+K = 6  # Total available features
 p = 2  # True model order
 var_y = 1  # Observation noise variance
 var_h = 1  # Feature noise variance
@@ -14,7 +14,17 @@ var_t = 0.5  # Theta noise variance
 # GENERATE DATA
 y, H, theta, idx = generate_data(K, p, T, var_y, var_h, var_t)
 
-D = linalg.inv(np.dot(H.T, H))
+D4 = la.inv(np.dot(H[:,:4].T, H[:,:4]))
+theta4 = np.linalg.multi_dot([D4, H[:,:4].T, y])
+
+D5or = la.inv(np.dot(H[:,:5].T, H[:,:5]))
+theta5or = np.linalg.multi_dot([D5or, H[:,:5].T, y])
+
+D3or = la.inv(np.dot(H[:,:3].T, H[:,:3]))
+theta3or = np.linalg.multi_dot([D3or, H[:,:3].T, y])
+
+theta3, D3, H3, idx_H3 = LS.orls_descend(H, len(theta4), K, 3, T, D4, theta4)
+theta5, D5, H5, idx_H5 = LS.orls_ascend(y, H, len(theta4), K, 0, T, D4, theta4)
 
 
 # CALL JPLS
@@ -40,6 +50,8 @@ def JPLS(y, H, idx, var_y, init):
     J_pred = [0]
     J_jump = theta_jump = idx_jump = k_jump = Dk_jump = [0, 0, 0]
     theta_store = [theta_k]
+
+
 
     # Start time loop
     for t in range(T):
