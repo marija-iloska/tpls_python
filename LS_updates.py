@@ -11,21 +11,22 @@ def orls_ascend(y, H, k, K, m, t, D, theta):
     h_new = H[:t, k+m]
 
     # Projection matrix
-    DHkT = np.dot(D, Hk.T)
-    P_norm = np.eye(t) - np.dot(Hk, DHkT)
+    DHkT = D @ Hk.T
+    P_norm = np.eye(t) - Hk @ DHkT
 
 
     # Some reusable terms
-    hnP = np.dot(h_new, P_norm)
-    hnPy = np.dot(hnP, y_past)
-    d = np.dot(DHkT, h_new)
+    hnP = h_new @ P_norm
+    hnPy = hnP @ y_past
+    d = DHkT @ h_new
+    dprime = d
 
 
     # Compute terms of D(k+1)
-    D22 = 1 / np.dot(hnP, h_new)
+    D22 = 1 / (hnP @ h_new)
     D12 = - d*D22
     D21 = D12.T
-    D11 = D + np.dot(d, d)*D22
+    D11 = D + np.outer(d,d)*D22
 
     # Create D(k+1)
     top = np.vstack([D11, D12])
@@ -39,8 +40,7 @@ def orls_ascend(y, H, k, K, m, t, D, theta):
     idx_H = list(range(0,k)) + [k+m] + list( np.setdiff1d( list(range(k,K)), [k+m] ) )
 
     # Update Hk in time and order
-    #Hk = H[1:t,:][:, idx_H[:k]]
-    Hk = 3
+    Hk = H[1:t,:][:, idx_H[:k]]
 
     return theta, D, Hk, idx_H
 
@@ -52,7 +52,7 @@ def orls_descend(H, k, K, m, t, D, theta):
     idx = list(np.setdiff1d( list(range(0,k)),m ))
 
     # Update Hk
-    Hk = H[:t,:][:, idx + [m]]
+    Hk = H[:t,:][:t, idx + [m]]
 
     # Update H
     idx_H = idx + list(range(k,K)) + [m]
@@ -65,12 +65,12 @@ def orls_descend(H, k, K, m, t, D, theta):
 
     # Get D(k+1) bar blocks
     D11 = Dswap[:k-1,:][:,:k-1]
-    D12 = Dswap[:k-1, k-1]
+    D12 = Dswap[:k-1, k-1:]
     D21 = D12.T
     D22 = Dswap[k-1,k-1]
 
     # Get D(k) final
-    D = D11 - np.dot(D12, D21) / D22
+    D = D11 - (D12 @ D21)/D22
 
     # Ratio
     ratio = D12/D22
