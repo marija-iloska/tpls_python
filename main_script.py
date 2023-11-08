@@ -1,9 +1,8 @@
 import numpy as np
 import LS_updates as LS
 import jumps as JP
-from scipy import linalg as la
+from numpy import linalg as la
 from make_data import generate_data
-
 
 # DATA SETTINGS
 T = 50  # Time series length

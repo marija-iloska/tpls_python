@@ -5,9 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="48286c49-8ad7-4cf0-8b4e-176afdf753df" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/jumps.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/predictive_errors.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LS_updates.py" beforeDir="false" afterPath="$PROJECT_DIR$/LS_updates.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main_script.py" beforeDir="false" afterPath="$PROJECT_DIR$/main_script.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -88,7 +87,7 @@
       <updated>1699186093124</updated>
       <workItem from="1699186095183" duration="4000" />
       <workItem from="1699188548472" duration="17000" />
-      <workItem from="1699454166283" duration="15630000" />
+      <workItem from="1699454166283" duration="16089000" />
     </task>
     <task id="LOCAL-00001" summary="Fixed outer product issue">
       <option name="closed" value="true" />
@@ -98,7 +97,15 @@
       <option name="project" value="LOCAL" />
       <updated>1699467202650</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Created Jump up and down functions">
+      <option name="closed" value="true" />
+      <created>1699474795700</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1699474795700</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -109,7 +116,13 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State />
+            <State>
+              <option name="HIGHLIGHTERS">
+                <map>
+                  <entry key="MY_COMMITS" value="false" />
+                </map>
+              </option>
+            </State>
           </value>
         </entry>
       </map>
@@ -117,7 +130,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Fixed outer product issue" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fixed outer product issue" />
+    <MESSAGE value="Created Jump up and down functions" />
+    <option name="LAST_COMMIT_MESSAGE" value="Created Jump up and down functions" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/JPLS$main_script.coverage" NAME="main_script Coverage Results" MODIFIED="1699465699152" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
