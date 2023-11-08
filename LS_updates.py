@@ -42,7 +42,7 @@ def orls_ascend(y, H, k, K, m, t, D, theta):
     # Update Hk in time and order
     Hk = H[1:t,:][:, idx_H[:k]]
 
-    return theta, D, Hk, idx_H
+    return theta, D, idx_H
 
 
 # ORLS descending step ====================================
@@ -78,7 +78,7 @@ def orls_descend(H, k, K, m, t, D, theta):
     # Update rest of theta
     theta = theta[idx] - theta[m]*ratio.reshape(k-1,1)
 
-    return theta, D, Hk, idx_H
+    return theta, D,  idx_H
 
 
 

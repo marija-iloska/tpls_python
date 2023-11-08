@@ -1,7 +1,9 @@
 import numpy as np
 import LS_updates as LS
+import jumps as JP
 from scipy import linalg as la
 from make_data import generate_data
+
 
 # DATA SETTINGS
 T = 50  # Time series length
@@ -16,7 +18,7 @@ y, H, theta, idx = generate_data(K, p, T, var_y, var_h, var_t)
 
 
 # CALL JPLS
-def JPLS(y, H, idx, var_y, init):
+def JPLS(y, H, var_y, t0):
 
     # Store true H
     H_true = H
@@ -42,7 +44,7 @@ def JPLS(y, H, idx, var_y, init):
 
 
     # Start time loop
-    for t in range(init,T):
+    for t in range(t0+1,T):
 
         # Update J
         J_stay = J + np.power( (y[t-1] - Hk @ theta_k), 2)
@@ -57,13 +59,13 @@ def JPLS(y, H, idx, var_y, init):
 
         # JUMP UP
         if k < K:
-            theta_jump[1], idx_jump[1], J_jump[1], Dk_jump[1], k_jump[1] = stay
+            theta_jump[1], idx_jump[1], J_jump[1], Dk_jump[1], k_jump[1] = JP.up(y, H, var_y, theta_k, Dk, K, k, t, t0)
         else:
             J_jump[1] = float('inf')
 
         # JUMP DOWN
         if k > 1:
-            theta_jump[2], idx_jump[2], J_jump[2], Dk_jump[2], k_jump[2] = stay
+            theta_jump[2], idx_jump[2], J_jump[2], Dk_jump[2], k_jump[2] = JP.down(y, H, var_y, theta_k, Dk, K, k, t, t0)
         else:
             J_jump[2] = float('inf')
 
@@ -90,7 +92,7 @@ def JPLS(y, H, idx, var_y, init):
         idx_jpls = np.where(find_H == True)
 
         # TIME UPDATE
-        theta_k, Dk = LS.trls_update(y, Hk[:,k-1], theta, Dk)
+        theta_k, Dk = LS.trls_update(y, Hk[:,k-1], theta_k, Dk)
 
     return theta_store, J_pred
 
