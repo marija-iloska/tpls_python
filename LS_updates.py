@@ -42,6 +42,7 @@ def orls_ascend(y, H, k, K, m, t, D, theta):
     # Update Hk in time and order
     Hk = H[1:t,:][:, idx_H[:k]]
 
+
     return theta, D, idx_H
 
 
@@ -78,7 +79,9 @@ def orls_descend(H, k, K, m, t, D, theta):
     # Update rest of theta
     theta = theta[idx] - theta[m]*ratio.reshape(k-1,1)
 
-    return theta, D,  idx_H
+    idx_k = idx + [m] +  list(range(k,K))
+
+    return theta, D,  idx_H, idx_k
 
 
 
@@ -87,17 +90,17 @@ def trls_update(y, hk, theta, D):
     # System dimension
     k = len(theta)
     # Current error
-    e = y - np.dot(theta, hk)
+    e = y - np.dot(hk, theta)
 
     # Update gain
-    temp = np.dot(D, hk)
-    K = temp / (1 + np.dot(hk.T, temp))
+    temp = D @ hk
+    K = temp / (1 + hk @ temp)
 
     # Update estimate
-    theta = theta + np.dot(K, e)
+    theta = theta + e*K.reshape(k,1)
 
     # Update covariance
-    temp = (np.eye(k) - np.dot(hk.T, K))
+    temp = np.eye(k) - np.outer(hk, K)
     D = np.matmul(temp, D)
 
     return theta, D
