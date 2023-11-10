@@ -17,3 +17,5 @@ t0 = K+1
 
 # CALL JPLS
 theta_k, idx_jpls, theta_store, J_pred = JPLS(y, H, t0)
+
+print('stop')

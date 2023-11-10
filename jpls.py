@@ -20,9 +20,10 @@ def JPLS(y, H, t0):
     idx_H = list(range(k))
 
     # Initialize
-    J = 0
-    e = [0]
-    J_pred = [0]
+    e = y[t0] - H[t0,:k] @ theta_k
+    J = e**2
+    e = [e]
+    J_pred = [J]
     J_jump = theta_jump = idx_jump = k_jump = Dk_jump = [0, 0, 0]
     theta_store = [theta_k]
 
@@ -35,7 +36,7 @@ def JPLS(y, H, t0):
         J_stay = J + np.power( (y[t-1] - Hk @ theta_k), 2)
 
         # Collect current state of estimate
-        stay = [theta_k, list(range(k)), J, Dk, k]
+        stay = [theta_k, list(range(K)), J, Dk, k]
 
         # MOVES =======================
 
@@ -44,6 +45,8 @@ def JPLS(y, H, t0):
 
         # JUMP UP
         if k < K:
+            if (k == 1):
+                print('stop')
             theta_up, idx_up, J_up, Dk_up, k_up = JP.up(y, H, theta_k, Dk, K, k, t, t0, J)
 
         else:
@@ -62,6 +65,7 @@ def JPLS(y, H, t0):
         Dk_jump = [Dk_stay, Dk_up, Dk_down]
         idx_jump = [idx_stay, idx_up, idx_down]
         theta_jump = [theta_stay, theta_up, theta_down]
+        print(idx_jump[0], idx_jump[1], idx_jump[2])
 
 
         # CRITERION to jump

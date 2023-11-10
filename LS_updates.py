@@ -19,7 +19,6 @@ def orls_ascend(y, H, k, K, m, t, D, theta):
     hnP = h_new @ P_norm
     hnPy = hnP @ y_past
     d = DHkT @ h_new
-    dprime = d
 
 
     # Compute terms of D(k+1)
@@ -79,7 +78,7 @@ def orls_descend(H, k, K, m, t, D, theta):
     # Update rest of theta
     theta = theta[idx] - theta[m]*ratio.reshape(k-1,1)
 
-    idx_k = idx + [m] +  list(range(k,K))
+    idx_k = idx + [m] + list(range(k,K))
 
     return theta, D,  idx_H, idx_k
 
