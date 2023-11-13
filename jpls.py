@@ -81,7 +81,7 @@ def JPLS(y, H, t0, var_y):
 
         # Predictive error
         J_pred.append(J)
-        e.append(y[t-1] - Hk @ theta_k)
+        e.append(y[t] - Hk[t,:] @ theta_k)
 
         # FIND indices
         find_H = np.isin(H[0,:], H_true[0,:])
@@ -89,7 +89,7 @@ def JPLS(y, H, t0, var_y):
 
 
         # TIME UPDATE
-        theta_k, Dk = LS.trls_update(y[t-1], Hk[t-1,:k], theta_k, Dk, var_y)
+        theta_k, Dk = LS.trls_update(y[t], Hk[t,:k], theta_k, Dk, var_y)
 
 
     return theta_k, idx_jpls, theta_store, J_pred

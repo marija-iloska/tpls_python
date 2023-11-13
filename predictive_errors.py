@@ -27,8 +27,8 @@ def pred_error(y, H, k, K, t, t0, var_y):
     for i in range(t0, t):
 
         # Compute Ai
-        #A = Hk[i, :k] @ Dk[:,k-1:]/Dk[k-1,k-1] - Hk[i, k]
-        A = Hk[i, :k] @ Dk @ Hk[:i, :k].T @ Hk[:i, k] - Hk[i, k]
+        A = Hk[i, :k] @ (Dkk[:k,k]/Dkk[k,k]) - Hk[i, k]
+        #A = Hk[i, :k] @ Dk @ Hk[:i, :k].T @ Hk[:i, k] - Hk[i, k]
 
         # Compute Gi
         G = np.hstack((G, A*theta_kk[-1]))

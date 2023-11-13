@@ -5,7 +5,7 @@ import matplotlib as plt
 # DATA SETTINGS
 T = 50  # Time series length
 K = 6  # Total available features
-p = 2  # True model order
+p = 5  # True model order
 var_y = 1  # Observation noise variance
 var_h = 1  # Feature noise variance
 var_t = 0.5  # Theta noise variance
