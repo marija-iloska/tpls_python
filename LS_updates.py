@@ -85,21 +85,28 @@ def orls_descend(H, k, K, m, t, D, theta):
 
 
 # TRLS update ====================================
-def trls_update(y, hk, theta, D):
+def trls_update(y, hk, theta, D, var_y):
     # System dimension
     k = len(theta)
+
     # Current error
-    e = y - np.dot(hk, theta)
+    e = y - hk @ theta
+
+    # Find current sigma
+    Sigma = var_y*D
 
     # Update gain
-    temp = D @ hk
-    K = temp / (1 + hk @ temp)
+    temp = Sigma @ hk
+    K = temp / (var_y + hk @ temp)
 
     # Update estimate
     theta = theta + e*K.reshape(k,1)
 
     # Update covariance
-    temp = np.eye(k) - np.outer(hk, K)
-    D = np.matmul(temp, D)
+    temp = np.eye(k) - np.outer(K, hk)
+    Sigma = np.matmul(temp, Sigma)
+
+    # Update D
+    D = Sigma/var_y
 
     return theta, D

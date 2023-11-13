@@ -1,5 +1,6 @@
 from jpls import JPLS
 from make_data import generate_data
+import matplotlib as plt
 
 # DATA SETTINGS
 T = 50  # Time series length
@@ -16,6 +17,8 @@ y, H, theta, idx = generate_data(K, p, T, var_y, var_h, var_t)
 t0 = K+1
 
 # CALL JPLS
-theta_k, idx_jpls, theta_store, J_pred = JPLS(y, H, t0)
+theta_k, idx_jpls, theta_store, J_pred = JPLS(y, H, t0, var_y)
 
 print('stop')
+
+plt.plot(J_pred)

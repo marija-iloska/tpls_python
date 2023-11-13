@@ -3,7 +3,7 @@ from numpy import linalg as la
 import LS_updates as LS
 import jumps as JP
 
-def JPLS(y, H, t0):
+def JPLS(y, H, t0, var_y):
 
     # Store true H
     H_true = H
@@ -14,9 +14,9 @@ def JPLS(y, H, t0):
 
     # Initialize
     k = round(K/2)
-    Hk = H[list(range(t0)),:][:, list(range(k))]
+    Hk = H[list(range(t0+1)),:][:, list(range(k))]
     Dk = la.inv(Hk.T @ Hk)
-    theta_k = Dk @ Hk.T @ y[:t0]
+    theta_k = Dk @ Hk[:t0,:].T @ y[:t0]
     idx_H = list(range(k))
 
     # Initialize
@@ -33,7 +33,7 @@ def JPLS(y, H, t0):
     for t in range(t0+1,T):
 
         # Update J
-        J_stay = J + np.power( (y[t-1] - Hk @ theta_k), 2)
+        J_stay = float(J + np.power( (y[t-1] - Hk[t-1,:] @ theta_k), 2))
 
         # Collect current state of estimate
         stay = [theta_k, list(range(K)), J, Dk, k]
@@ -45,16 +45,13 @@ def JPLS(y, H, t0):
 
         # JUMP UP
         if k < K:
-            if (k == 1):
-                print('stop')
-            theta_up, idx_up, J_up, Dk_up, k_up = JP.up(y, H, theta_k, Dk, K, k, t, t0, J)
-
+            theta_up, idx_up, J_up, Dk_up, k_up = JP.up(y, H, theta_k, Dk, K, k, t, t0, J, var_y)
         else:
             J_up = float('inf')
 
         # JUMP DOWN
         if k > 1:
-            theta_down, idx_down, J_down, Dk_down, k_down = JP.down(y, H, theta_k, Dk, K, k, t, t0, J)
+            theta_down, idx_down, J_down, Dk_down, k_down = JP.down(y, H, theta_k, Dk, K, k, t, t0, J, var_y)
         else:
             J_down = float('inf')
 
@@ -79,7 +76,7 @@ def JPLS(y, H, t0):
         k = k_jump[minJ]
 
         # Some Quantity updates
-        Hk = H[:t, list(range(k))]
+        Hk = H[:t+1, list(range(k))]
         theta_store.append(theta_k)
 
         # Predictive error
@@ -90,7 +87,9 @@ def JPLS(y, H, t0):
         find_H = np.isin(H[0,:], H_true[0,:])
         idx_jpls = np.where(find_H == True)
 
+
         # TIME UPDATE
-        theta_k, Dk = LS.trls_update(y[t-1], Hk[t-1,:k], theta_k, Dk)
+        theta_k, Dk = LS.trls_update(y[t-1], Hk[t-1,:k], theta_k, Dk, var_y)
+
 
     return theta_k, idx_jpls, theta_store, J_pred
