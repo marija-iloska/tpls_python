@@ -39,10 +39,10 @@ def orls_ascend(y, H, k, K, m, t, D, theta):
     idx_H = list(range(0,k)) + [k+m] + list( np.setdiff1d( list(range(k,K)), [k+m] ) )
 
     # Update Hk in time and order
-    Hk = H[1:t,:][:, idx_H[:k]]
+    Hk = H[0:t+1,:][:, idx_H[:k+1]]
 
 
-    return theta, D, idx_H
+    return theta, D, idx_H, Hk
 
 
 # ORLS descending step ====================================
@@ -52,7 +52,7 @@ def orls_descend(H, k, K, m, t, D, theta):
     idx = list(np.setdiff1d( list(range(0,k)),m ))
 
     # Update Hk
-    Hk = H[:t,:][:t, idx + [m]]
+    Hk = H[:t+1,:][:, idx + [m]]
 
     # Update H
     idx_H = idx + list(range(k,K)) + [m]
@@ -80,7 +80,7 @@ def orls_descend(H, k, K, m, t, D, theta):
 
     idx_k = idx + [m] + list(range(k,K))
 
-    return theta, D,  idx_H, idx_k
+    return theta, D,  idx_H, Hk
 
 
 

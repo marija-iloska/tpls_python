@@ -15,25 +15,26 @@ def JPLS(y, H, t0, var_y):
     # Initialize
     k = round(K/2)
     Hk = H[list(range(t0+1)),:][:, list(range(k))]
-    Dk = la.inv(Hk.T @ Hk)
-    theta_k = Dk @ Hk[:t0,:].T @ y[:t0]
+    Dk = la.inv(Hk[:t0-1,:].T @ Hk[:t0-1,:])
+    theta_k = Dk @ Hk[:t0-1,:].T @ y[:t0-1]
     idx_H = list(range(k))
 
     # Initialize
-    e = y[t0] - H[t0,:k] @ theta_k
+    e = y[t0-1] - Hk[t0-1,:] @ theta_k
     J = e**2
-    e = [e]
+    e_pred = [e]
     J_pred = [J]
+    theta_store = []
+    idx_store = []
     J_jump = theta_jump = idx_jump = k_jump = Dk_jump = [0, 0, 0]
-    theta_store = [theta_k]
-
 
 
     # Start time loop
-    for t in range(t0+1,T):
+    for t in range(t0,T-1):
 
-        # Update J
-        J_stay = float(J + np.power( (y[t-1] - Hk[t-1,:] @ theta_k), 2))
+        # Update J stay
+        e = y[t] - Hk[t,:] @ theta_k
+        J = float(J + e**2)
 
         # Collect current state of estimate
         stay = [theta_k, list(range(K)), J, Dk, k]
@@ -55,15 +56,12 @@ def JPLS(y, H, t0, var_y):
         else:
             J_down = float('inf')
 
-        print(t)
         # Store
         J_jump = [J_stay, J_up, J_down]
         k_jump = [k_stay, k_up, k_down]
         Dk_jump = [Dk_stay, Dk_up, Dk_down]
         idx_jump = [idx_stay, idx_up, idx_down]
         theta_jump = [theta_stay, theta_up, theta_down]
-        print(idx_jump[0], idx_jump[1], idx_jump[2])
-
 
         # CRITERION to jump
         minJ = J_jump.index( min(J_jump) )
@@ -76,20 +74,23 @@ def JPLS(y, H, t0, var_y):
         k = k_jump[minJ]
 
         # Some Quantity updates
-        Hk = H[:t+1, list(range(k))]
+        Hk = H[:t+2, list(range(k))]
         theta_store.append(theta_k)
 
         # Predictive error
         J_pred.append(J)
-        e.append(y[t] - Hk[t,:] @ theta_k)
+        e_pred.append(y[t] - Hk[t,:] @ theta_k)
 
-        # FIND indices
-        find_H = np.isin(H[0,:], H_true[0,:])
-        idx_jpls = np.where(find_H == True)
+        # FIND which features were used
+        idx_jpls = []
+        for i in range(K):
+            if H[0,i] in H_true[0,:]:
+                idx_jpls.append(int( np.where(H_true[0,:] == H[0,i])[0] ))
+        idx_store.append(idx_jpls[:k])
 
 
         # TIME UPDATE
         theta_k, Dk = LS.trls_update(y[t], Hk[t,:k], theta_k, Dk, var_y)
 
 
-    return theta_k, idx_jpls, theta_store, J_pred
+    return theta_k, idx_store, theta_store, J_pred

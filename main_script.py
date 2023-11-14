@@ -1,11 +1,12 @@
 from jpls import JPLS
 from make_data import generate_data
 import matplotlib as plt
+import numpy as np
 
 # DATA SETTINGS
-T = 50  # Time series length
-K = 6  # Total available features
-p = 5  # True model order
+T = 30  # Time series length
+K = 7  # Total available features
+p = 6  # True model order
 var_y = 1  # Observation noise variance
 var_h = 1  # Feature noise variance
 var_t = 0.5  # Theta noise variance
@@ -19,6 +20,8 @@ t0 = K+1
 # CALL JPLS
 theta_k, idx_jpls, theta_store, J_pred = JPLS(y, H, t0, var_y)
 
-print('stop')
+idx = np.where(theta !=0)[0]
+print(np.sort(idx_jpls[-1]))
+print(list(np.sort(idx)))
 
-plt.plot(J_pred)
+print('stop')
