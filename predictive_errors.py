@@ -33,8 +33,11 @@ def pred_error(y, Hk, k, K, t, t0, var_y):
         theta_kk, Dkk = LS.trls_update(y[i], Hk[i, :k+1], theta_kk, Dkk, var_y)
         theta_k, Dk = LS.trls_update(y[i], Hk[i, :k], theta_k, Dk, var_y)
 
-    # Residual error
+    # Residual error (ignore initialized element in THETA)
     temp = Hk[t0:t+1, :k] * THETA[:,:][:,1:].T
     E = y[t0:t+1] - np.sum(temp, axis=1).reshape(t-t0+1,1)
 
-    return G[1:], E
+    # Ignore initialized element, and reshape
+    G = G[1:].reshape(t-t0+1,1)
+
+    return G, E

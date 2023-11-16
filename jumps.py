@@ -6,10 +6,10 @@ import numpy as np
 def up(y, H, theta_k, Dk, K, k, t, t0, J, var_y):
 
     # Initialize
-    theta_store = np.empty((k+1,1))
-    D_store = np.empty((k+1,k+1))
-    idx_store = np.arange(K)
-    J_store = np.array([float('inf')])
+    theta_store = []
+    D_store = []
+    idx_store = []
+    J_store = []
 
     # Loop through all models
     for m in range(K-k):
@@ -18,23 +18,23 @@ def up(y, H, theta_k, Dk, K, k, t, t0, J, var_y):
 
         # Compute PE  J(k+1,t) -- > J(k,t)
         G, E = PE.pred_error(y, Hk, k, K, t, t0, var_y)
-        Jk = J + (G@G + 2*G@E)
+        Jk = J + (G.T@G + 2*G.T@E)
+
         # Store
-        theta_store = np.hstack((theta_store, theta))
-        D_store = np.hstack((D_store, D))
-        idx_store = np.vstack((idx_store, idx_H))
-        J_store = np.hstack((J_store, Jk))
+        theta_store.append(theta)
+        D_store.append(D)
+        idx_store.append(idx_H)
+        J_store.append(float(Jk[0]))
 
 
     # Find minimum predictive error
-    minJ = np.where(J_store == min(J_store))
-    minJ = int(minJ[0]) -1
+    minJ = J_store.index(min(J_store))
 
     # Update quantities
-    theta = theta_store[:,minJ + 1].reshape(k+1,1)
-    idx_H = idx_store[minJ + 1,:]
-    J = J_store[minJ + 1]
-    D = D_store[:,  k+1 + minJ*(k+1): (minJ+1)*(k+1) + k+1]
+    theta = theta_store[minJ]
+    idx_H = idx_store[minJ]
+    J = J_store[minJ]
+    D = D_store[minJ]
     k = k + 1
 
     return theta, idx_H, J, D, k
@@ -44,10 +44,10 @@ def up(y, H, theta_k, Dk, K, k, t, t0, J, var_y):
 def down(y, H, theta_k, Dk, K, k, t, t0, J, var_y):
 
     # Initialize
-    theta_store = np.empty((k-1,1))
-    D_store = np.empty((k-1,k-1))
-    idx_store = np.arange(K)
-    J_store = np.array([float('inf')])
+    theta_store = []
+    D_store = []
+    idx_store = []
+    J_store = []
 
     # Loop through all models
     for m in range(k):
@@ -57,23 +57,22 @@ def down(y, H, theta_k, Dk, K, k, t, t0, J, var_y):
 
         # Compute PE  J(k+1,t) -- > J(k,t)
         G,E = PE.pred_error(y, Hk, k-1, K, t, t0, var_y)
-        Jk = J - (G@G + 2*G@E)
+        Jk = J - (G.T@G + 2*G.T@E)
 
         # Store
-        theta_store = np.hstack((theta_store, theta))
-        D_store = np.hstack((D_store, D))
-        idx_store = np.vstack((idx_store, idx_H))
-        J_store = np.append(J_store, Jk)
+        theta_store.append(theta)
+        D_store.append(D)
+        idx_store.append(idx_H)
+        J_store.append(float(Jk[0]))
 
     # Find minimum predictive error
-    minJ = np.where(J_store == min(J_store))
-    minJ = int(minJ[0]) - 1
+    minJ = J_store.index(min(J_store))
 
     # Update quantities
-    theta = theta_store[:,minJ + 1].reshape(k-1,1)
-    idx_H = idx_store[minJ + 1,:]
-    J = J_store[minJ+1]
-    D = D_store[:, k-1 + minJ*(k-1) : (minJ+1)*(k-1) + k-1]
+    theta = theta_store[minJ]
+    idx_H = idx_store[minJ]
+    J = J_store[minJ]
+    D = D_store[minJ]
     k = k-1
 
     return theta, idx_H, J, D, k

@@ -36,10 +36,10 @@ def orls_ascend(y, H, k, K, m, t, D, theta):
     theta = np.vstack( [theta - hnPyD*d.reshape(k,1), hnPyD])
 
     # Update feature indices
-    idx_H = list(range(0,k)) + [k+m] + list( np.setdiff1d( list(range(k,K)), [k+m] ) )
+    idx_H = list(range(k)) + [k+m] + list( np.setdiff1d( list(range(k,K)), [k+m] ) )
 
     # Update Hk in time and order
-    Hk = H[0:t+1,:][:, idx_H[:k+1]]
+    Hk = H[:t+1,:][:, idx_H[:k+1]]
 
 
     return theta, D, idx_H, Hk
@@ -59,8 +59,8 @@ def orls_descend(H, k, K, m, t, D, theta):
 
     # Get D(k+1) bar
     Dswap = np.empty((k, k))
-    Dswap[0:k-1,:][:,0:k-1] = D[idx, :][:, idx]
-    Dswap[k-1,0:k-1] = D[m, idx]
+    Dswap[:k-1,:][:,:k-1] = D[idx, :][:, idx]
+    Dswap[k-1,:k-1] = D[m, idx]
     Dswap[:, k-1] = D[ idx+[m], m]
 
     # Get D(k+1) bar blocks

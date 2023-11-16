@@ -15,18 +15,17 @@ def JPLS(y, H, t0, var_y):
     # Initialize
     k = round(K/2)
     Hk = H[list(range(t0+1)),:][:, list(range(k))]
-    Dk = la.inv(Hk[:t0-1,:].T @ Hk[:t0-1,:])
-    theta_k = Dk @ Hk[:t0-1,:].T @ y[:t0-1]
+    Dk = la.inv(Hk[:t0,:].T @ Hk[:t0,:])
+    theta_k = Dk @ Hk[:t0,:].T @ y[:t0]
     idx_H = list(range(k))
 
     # Initialize
-    e = y[t0-1] - Hk[t0-1,:] @ theta_k
-    J = e**2
-    e_pred = [e]
-    J_pred = [J]
+    J = 0
+    e_pred = []
+    J_pred = []
     theta_store = []
     idx_store = []
-    J_jump = theta_jump = idx_jump = k_jump = Dk_jump = [0, 0, 0]
+    #J_jump = theta_jump = idx_jump = k_jump = Dk_jump = [0, 0, 0]
 
 
     # Start time loop
