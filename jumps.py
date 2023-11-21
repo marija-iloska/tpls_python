@@ -3,13 +3,16 @@ import predictive_errors as PE
 import numpy as np
 
 # JUMP UP FUNCTION
-def up(y, H, theta_k, Dk, K, k, t, t0, J, var_y):
+def up(y, H, theta_k, Dk, K, k, t, t0, J, var_y, e):
 
     # Initialize
     theta_store = []
     D_store = []
     idx_store = []
     J_store = []
+    condition = []
+    J_cond = []
+    cond_log = []
 
     # Loop through all models
     for m in range(K-k):
@@ -20,11 +23,17 @@ def up(y, H, theta_k, Dk, K, k, t, t0, J, var_y):
         G, E = PE.pred_error(y, Hk, k, K, t, t0, var_y)
         Jk = J + (G.T@G + 2*G.T@E)
 
+        # expression on left
+        cond = float( Hk[t-1,k]*(Hk[:t-1,k] @ y[:t-1])/(Hk[:t-1,k] @ Hk[:t-1,k]))
+
         # Store
         theta_store.append(theta)
         D_store.append(D)
         idx_store.append(idx_H)
         J_store.append(float(Jk[0]))
+        condition.append( cond - 2*e < 0 )
+        J_cond.append(Jk[0] < J)
+        cond_log.append(cond - 2*e)
 
 
     # Find minimum predictive error

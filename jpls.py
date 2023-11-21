@@ -25,6 +25,7 @@ def JPLS(y, H, t0, var_y):
     J_pred = []
     theta_store = []
     idx_store = []
+    condition = []
     #J_jump = theta_jump = idx_jump = k_jump = Dk_jump = [0, 0, 0]
 
 
@@ -45,7 +46,7 @@ def JPLS(y, H, t0, var_y):
 
         # JUMP UP
         if k < K:
-            theta_up, idx_up, J_up, Dk_up, k_up = JP.up(y, H, theta_k, Dk, K, k, t, t0, J, var_y)
+            theta_up, idx_up, J_up, Dk_up, k_up = JP.up(y, H, theta_k, Dk, K, k, t, t0, J, var_y, e)
         else:
             J_up = float('inf')
 
