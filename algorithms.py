@@ -1,111 +1,215 @@
 import numpy as np
 
 
-class ORLS:
+# SCAN OVER ALL FEATURES ================================================================================
+class ModelJump:
 
-    def __init__(self, theta: np.ndarray, D: np.ndarray, y: np.ndarray, H: np.ndarray, K: int):
-        '''
-        Args:
-            theta: parameter to be updated of size k x 1
-            D: Inverse feature matrix to be updated
-            y: Output data of size t x 1
-            H: Feature matrix of size t x K
-            K: Number of total available features
-        '''
+    ''' Computes and stores quantities in the cases of:
+      Jumping a model dimension up  k --> k + 1
+      Jumping a model dimension down k --> k - 1
+      Remaining in the same model k --> k '''
 
+    def __init__(self, theta: np.ndarray, D: np.ndarray, y: np.ndarray, H: np.ndarray, K: int, var_y: float,
+                 J: np.ndarray, times: tuple):
+
+        self.J = J
         self.theta = theta
         self.D = D
-        self.k = len(theta)
-        self.K = K
-        self.y = y
-        self.H = H
+        self.model = ORLS(theta, D, y, H, K)
+        self.PE = PredictiveError(y, times[0], times[1], K, var_y)
 
-    # ASCENDING STEP ====================================
-    def ascend(self, m: int):
+
+    # UP -----------------------------------------------------------------------
+    def up(self):
+
+        ''' This function computes and stores the predictive error
+        for adding any one feature from the unused available features.  '''
+
+        model = self.model
+        PE = self.PE
+
+        # Initialize
+        theta_store = []
+        D_store = []
+        idx_store = []
+        J_store = []
+
+        # Loop through all models
+        for m in range(model.K - model.k):
+            # Update dimension down  k+1 ---> k
+            theta, D, idx_H, Hk = model.ascend(m)
+
+            # Compute PE  J(k+1,t) -- > J(k,t)
+            G, E = PE.compute(Hk, model.k)
+            Jk = self.J + (G.T @ G + 2 * G.T @ E)
+
+            # Store
+            theta_store.append(theta)
+            D_store.append(D)
+            idx_store.append(idx_H)
+            J_store.append(Jk)
+
+        theta, D, J, idx_H = get_min(theta_store, D_store, J_store, idx_store)
+
+        return theta, idx_H, J, D
+
+
+    # DOWN -----------------------------------------------------------------------
+    def down(self):
+
+        ''' This function computes and stores the predictive error
+        for removing any one feature from the current model.  '''
+
+        model = self.model
+        PE = self.PE
+
+        # Initialize
+        theta_store = []
+        D_store = []
+        idx_store = []
+        J_store = []
+
+        # Loop through all models
+        for m in range(model.k):
+            # Update dimension down  k+1 ---> k
+            theta, D, idx_H, Hk = model.descend(m)
+
+            # Compute PE  J(k+1,t) -- > J(k,t)
+            G, E = PE.compute(Hk, model.k - 1)
+            Jk = self.J - (G.T @ G + 2 * G.T @ E)
+
+            # Store
+            theta_store.append(theta)
+            D_store.append(D)
+            idx_store.append(idx_H)
+            J_store.append(Jk)
+
+        theta, D, J, idx_H = get_min(theta_store, D_store, J_store, idx_store)
+
+        return theta, idx_H, J, D
+
+    # STAY -----------------------------------------------------------------------
+    def stay(self):
+        ''' This function stores all the quantities
+        for remaining in the present model. '''
+
+        idx_H = np.arange(self.model.K)
+        return self.theta, idx_H, self.J, self.D
+
+
+# JUMP PREDICTIVE LEAST SQUARES - One time step in ALGORITHM 4 ======================================================
+class jumpPLS:
+    
+    ''' Algorithm step that finds best model as we collect data point.
+    Uses ModelJump class to scan over features, get predictive error and decide model
+
+    model_update: uses ORLS to add/remove a feature or to stay
+    time_update: uses RLS to update with new data point
+    '''
+
+    def __init__(self, initials: list, params: list, predictive_error: float, num_available_features: int,
+                 noise_variance: float):
+
         '''
-        Args:
-            m: Index of Feature to be added
+         initials: initial data batch y0, H0
+         params: initial theta0, D0 = inv(H0^T H0), and features used idx0
+         predictive_error: initial predictive error
+         num_available_features: K
+         noise_variance: observation noise var
         '''
 
-        # Time instant and parameter dimension
-        t = len(self.y)
-        k = self.k
+        # Initial data
+        self.y = initials[0]
+        self.H = initials[1]
 
-        # Current input data (loops 0 to index minus 1)
-        Hk = self.H[:t, :k]
+        # Initial params
+        self.theta = params[0]
+        self.D = params[1]
+        self.selected_features_idx = params[2]
+        self.PredError = predictive_error
 
-        # New feature to be added
-        h_new = self.H[:t, k + m]
+        # System settings
+        self.K = num_available_features
+        self.var = noise_variance
 
-        # Projection matrix
-        DHkT = self.D @ Hk.T
-        P_norm = np.eye(t) - Hk @ DHkT
+        # Copy of Feature matrix that will be resorted (for convenience) and used throughout the algorithm
+        self.H_sorted = initials[1]
 
-        # Some reusable terms
-        v = h_new @ P_norm
-        vy = v @ self.y[:t]
-        d = DHkT @ h_new
+        # To keep track of the feature resorting
+        self.all_features_idx = np.arange(self.K)
+        self.sorted_features_idx = np.arange(self.K)
 
-        # Compute terms of D(k+1)
-        D22 = 1 / (v @ h_new)
-        D12 = - d * D22
-        D11 = self.D + np.outer(d, d) * D22
+        # Present model size and initial data size
+        self.k = len(self.theta)
+        self.t0 = len(self.y)
 
-        # Create D(k+1)
-        top = np.vstack([D11, D12])
-        D = np.hstack([top, np.append(D12.T, D22).reshape(k + 1, 1)])
+    # MODEL UPDATE WITH NEW DATA (FIXED TIME) --------------------------------------------------------------
+    def model_update(self, data_t: float, features_t: np.ndarray, t: int):
 
-        # Update theta(k) to theta(k+1)
-
-        vyD = vy * D22  # reusable term
-        theta = np.vstack([self.theta - vyD * d.reshape(k, 1), vyD])
-
-        # New intex order
-        # Reorder available features (put new feature m right after the other used features)
-        idx_H = np.concatenate((np.arange(k), [k + m], np.setdiff1d(np.arange(k, self.K), [k + m])))
-
-        # Update Hk in time for input to Predictive Error
-        Hk = self.H[:t, idx_H[:k + 1]]
-
-        return theta, D, idx_H, Hk
-
-    # DESCENDING STEP ====================================
-    def descend(self, m: int):
         '''
-        Args:
-            m: Index of Feature to be removed
+        Function that executes model update in Algorithm 4
+        (data_t, features_t) - new data pair at time t
         '''
 
-        # System Dimension
-        k = self.k
-        t = len(self.y)
+        # New data point at time t
+        self.y = np.append(self.y, data_t)
+        self.H = np.vstack((self.H, features_t))
 
-        # Range of indices to include
-        idx = np.setdiff1d(np.arange(k), m)
-        idx_m = np.append(idx, m)
+        # Append new feature to resorted feature matrix
+        self.H_sorted = np.vstack((self.H_sorted, features_t[self.sorted_features_idx]))
 
-        # Get D(k+1) bar
-        Dswap = np.empty((k, k))
-        Dswap[:k - 1, :][:, :k - 1] = self.D[idx, :][:, idx]
-        Dswap[k - 1, :k - 1] = self.D[m, idx]
-        Dswap[:, k - 1] = self.D[idx_m, m]
+        # Update predictive error J(t-1) --> J(t)
+        e = data_t - features_t[self.selected_features_idx] @ self.theta
+        J = self.PredError + e ** 2
 
-        # Get D(k+1) bar blocks
-        D11 = Dswap[:k - 1, :][:, :k - 1]
-        D12 = Dswap[:k - 1, k - 1:]
-        D22 = Dswap[k - 1, k - 1]
+        # Define present model
+        jump = ModelJump(self.theta, self.D, self.y, self.H_sorted, self.K, self.var, J, (self.t0, t))
 
-        # Get D(k) final
-        D = D11 - np.outer(D12, D12.T) / D22
+        # STAY
+        theta_stay, idx_stay, J_stay, Dk_stay = jump.stay()
 
-        # Update rest of theta
-        theta = self.theta[idx] - self.theta[m] * (D12 / D22).reshape(k - 1, 1)
+        # JUMP UP 
+        if self.k < self.K:
+            theta_up, idx_up, J_up, Dk_up = jump.up()
+        else:
+            J_up = float('inf')
+            Dk_up = theta_up = idx_up = 0
 
-        # New index order
-        # Hk to input to Predictive Error
-        Hk = self.H[:, idx_m]
+        # JUMP DOWN
+        if self.k > 1:
+            theta_down, idx_down, J_down, Dk_down = jump.down()
+        else:
+            J_down = float('inf')
+            Dk_down = theta_down = idx_down = 0
 
-        # Reorder available features - move m to last
-        idx_H = np.concatenate((idx, np.arange(k, self.K), [m]))
+        # Store
+        J_jump = [J_stay, J_up, J_down]
+        Dk_jump = [Dk_stay, Dk_up, Dk_down]
+        idx_jump = [idx_stay, idx_up, idx_down]
+        theta_jump = [theta_stay, theta_up, theta_down]
 
-        return theta, D, idx_H, Hk
+        # Get quantities with smallest predictive error
+        self.theta, self.D, self.PredError, self.all_features_idx = get_min(theta_jump, Dk_jump, J_jump, idx_jump)
+
+        # Quantities to Update
+        self.k = self.theta.shape[0]
+        self.H_sorted = self.H_sorted[:, self.all_features_idx]
+
+        # Find selected features location in original feature matrix
+        self.sorted_features_idx = get_features(self.H[0, :], self.H_sorted[0, :], K, K)
+        self.selected_features_idx = self.sorted_features_idx[:self.k]
+
+
+    # TIME UPDATE WITH NEW DATA (FIXED MODEL)-  -------------------------------------------------------------
+    def time_update(self, data_t: float,  features_t: np.ndarray):
+
+        '''
+        Function that executes time update in Algorithm 4
+        (data_t, features_t) - new data pair at time t
+        '''
+
+        # Define present model k
+        present_model = RLS(self.theta, self.D)
+
+        # Update with new data point
+        self.theta, self.D = present_model.ascend(data_t, features_t, self.var)
