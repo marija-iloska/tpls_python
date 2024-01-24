@@ -1,4 +1,6 @@
 import numpy as np
+import LS_updates as ls
+import util
 
 # SCAN OVER ALL FEATURES ================================================================================
 class ModelJump:
@@ -14,8 +16,8 @@ class ModelJump:
         self.J = J
         self.theta = theta
         self.D = D
-        self.model = ORLS(theta, D, y, H, K)
-        self.PE = PredictiveError(y, times[0], times[1], K, var_y)
+        self.model = ls.ORLS(theta, D, y, H, K)
+        self.PE = ls.PredictiveError(y, times[0], times[1], K, var_y)
 
 
     # UP -----------------------------------------------------------------------
@@ -48,7 +50,7 @@ class ModelJump:
             idx_store.append(idx_H)
             J_store.append(Jk)
 
-        theta, D, J, idx_H = get_min(theta_store, D_store, J_store, idx_store)
+        theta, D, J, idx_H = util.get_min(theta_store, D_store, J_store, idx_store)
 
         return theta, idx_H, J, D
 
@@ -83,7 +85,7 @@ class ModelJump:
             idx_store.append(idx_H)
             J_store.append(Jk)
 
-        theta, D, J, idx_H = get_min(theta_store, D_store, J_store, idx_store)
+        theta, D, J, idx_H = util.get_min(theta_store, D_store, J_store, idx_store)
 
         return theta, idx_H, J, D
 
@@ -142,6 +144,8 @@ class jumpPLS:
         self.k = len(self.theta)
         self.t0 = len(self.y)
 
+
+
     # MODEL UPDATE WITH NEW DATA (FIXED TIME) --------------------------------------------------------------
     def model_update(self, data_t: float, features_t: np.ndarray, t: int):
 
@@ -188,14 +192,14 @@ class jumpPLS:
         theta_jump = [theta_stay, theta_up, theta_down]
 
         # Get quantities with smallest predictive error
-        self.theta, self.D, self.PredError, self.all_features_idx = get_min(theta_jump, Dk_jump, J_jump, idx_jump)
+        self.theta, self.D, self.PredError, self.all_features_idx = util.get_min(theta_jump, Dk_jump, J_jump, idx_jump)
 
         # Quantities to Update
         self.k = self.theta.shape[0]
         self.H_sorted = self.H_sorted[:, self.all_features_idx]
 
         # Find selected features location in original feature matrix
-        self.sorted_features_idx = get_features(self.H[0, :], self.H_sorted[0, :], K, K)
+        self.sorted_features_idx = util.get_features(self.H[0, :], self.H_sorted[0, :], self.K, self.K)
         self.selected_features_idx = self.sorted_features_idx[:self.k]
 
 
@@ -208,7 +212,7 @@ class jumpPLS:
         '''
 
         # Define present model k
-        present_model = RLS(self.theta, self.D)
+        present_model = ls.RLS(self.theta, self.D)
 
         # Update with new data point
         self.theta, self.D = present_model.ascend(data_t, features_t, self.var)
