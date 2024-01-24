@@ -18,7 +18,7 @@ import numpy as np
 
 
 
-# INDEX OF MODEL WITH MIN PREDICTIVE ERROR
+# INDEX OF MODEL WITH MIN PREDICTIVE ERROR =======================================================
 def get_min(theta: list, D: list, J: list, idx: list):
 
     # Find model with minimum predictive error
@@ -28,7 +28,9 @@ def get_min(theta: list, D: list, J: list, idx: list):
     return theta[minJ], D[minJ], J[minJ], idx[minJ]
 
 
-# FEATURE INDEX SORTING =====================================
+
+
+# FEATURE INDEX SORTING ===========================================================================
 def get_features(H_true: np.ndarray, H_sorted: np.ndarray, K: int, k: int):
     
     ''' This functions finds the location of the selected features in the original
@@ -54,7 +56,9 @@ def get_features(H_true: np.ndarray, H_sorted: np.ndarray, K: int, k: int):
     return idx[:k]
 
 
-# INITIAL ESTIMATE ==========================================
+
+
+# INITIAL ESTIMATE ================================================================================
 def initialize(init_data: list):
     
     ''' This functions obtains theta estimate and predictive error
@@ -83,7 +87,8 @@ def initialize(init_data: list):
     return theta0, D0, J0
 
 
-# CREATE DATA FUNCTION =====================================
+
+# CREATE DATA FUNCTION =========================================================================
 def generate_data(K: int, p: int, T: int, var_h: float, var_t: float):
 
     ''' This function creates output data y without noise,
