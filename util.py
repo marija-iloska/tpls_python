@@ -1,4 +1,7 @@
 
+# IMPORTS
+import numpy as np
+
 ''' Functions used often in the implementation
 
     get_min:  finds the index of the model with minimum predictive error
@@ -10,13 +13,14 @@
     initialize:  gives theta estimate with initial batch size
         and spares 1 data point to find first predictive error
         
-    generate_data:  a function to generate synthetic data
+    generate_data:  a function to generate synthetic data (output data without noise)
 '''
 
 
 
 # INDEX OF MODEL WITH MIN PREDICTIVE ERROR
-def get_min(theta, D, J, idx):
+def get_min(theta: list, D: list, J: list, idx: list):
+
     # Find model with minimum predictive error
     minJ = J.index(min(J))
 
@@ -24,19 +28,40 @@ def get_min(theta, D, J, idx):
     return theta[minJ], D[minJ], J[minJ], idx[minJ]
 
 
-# FEATURE INDEX SORTING
-def get_features(H_true, H_sorted, K, k):
+# FEATURE INDEX SORTING =====================================
+def get_features(H_true: np.ndarray, H_sorted: np.ndarray, K: int, k: int):
+    
+    ''' This functions finds the location of the selected features in the original
+    feature matrix.
 
+        K: Number of available features
+        k: Number of features used
+        H_true: Original feature matrix
+        H_sorted: Feature matrix with reordered feature indices (from algorithm)
+    '''
+
+    # User input error
+    if k > K:
+        ValueError('Number of selected features must be less or equal to total available features.')
+        
     # Create empty array to collect resorted features
     idx = np.array([], dtype=int)
     for i in range(K):
         if H_sorted[i] in H_true:
             idx = np.append(idx, np.where(H_true == H_sorted[i])[0])
+
     # Return selected or all resorted features
     return idx[:k]
 
 
-def initialize(init_data):
+# INITIAL ESTIMATE ==========================================
+def initialize(init_data: list):
+    
+    ''' This functions obtains theta estimate and predictive error
+    with initial batch size of data. 
+
+        init_data: A list that contains initial y, H, and feature indices
+    '''
 
     # Data pair and initial features
     y0, H0, idx0 = init_data
@@ -44,8 +69,12 @@ def initialize(init_data):
     # Spare 1 data point for predictive error
     t0 = len(y0) - 1
 
+    # CONDITIONS
+    if t0 < len(idx0):
+        ValueError('Number of data points must be greater than number of features used.')
+
     # Initialize parameter estimate
-    D0 = la.inv(H0[:t0, idx0].T @ H0[:t0, idx0])
+    D0 = np.linalg.inv(H0[:t0, idx0].T @ H0[:t0, idx0])
     theta0 = D0 @ H0[:t0, idx0].T @ y0[:t0]
 
     # Predictive error
@@ -54,11 +83,21 @@ def initialize(init_data):
     return theta0, D0, J0
 
 
-# CREATE DATA FUNCTION
-def generate_data(K, p, T, var_y, var_h, var_t):
+# CREATE DATA FUNCTION =====================================
+def generate_data(K: int, p: int, T: int, var_h: float, var_t: float):
 
-    ''' This functions create output data y without noise,
-        parameter theta, and feature matrix H. '''
+    ''' This function creates output data y without noise,
+        parameter theta, and feature matrix H.
+
+        K: Number of available features
+        p: Dimension of the true model (number of features used)
+        T: Number of data points
+        var_h: Noise varaince to create feature vectors
+        var_t: Noise variance to create theta
+    '''
+
+    if p > K:
+        ValueError('Total number of features must be greater than the number of features use.')
 
     # Create feature matrix
     H = np.random.normal(0, var_h, (T, K))
@@ -67,11 +106,11 @@ def generate_data(K, p, T, var_y, var_h, var_t):
     theta = np.random.normal(0, var_t, (K, 1))
 
     # Choose indices to set to 0
-    idx = sample(list(range(1, K)), K - p)
+    idx = np.random.choice(np.arange(K), K-p, replace=False)
     theta[idx] = 0
 
     # Create data without noise
-    y = np.dot(H, theta)
+    y = H @ theta
 
     return y, H, theta, idx
 
