@@ -66,7 +66,7 @@ class ORLS:
         vyD = vy * D22  # reusable term
         theta = np.vstack([self.theta - vyD * d.reshape(k, 1), vyD])
 
-        # New intex order
+        # New index order
         # Reorder available features (put new feature m right after the other used features)
         idx_H = np.concatenate((np.arange(k), [k + m], np.setdiff1d(np.arange(k, self.K), [k + m])))
 
@@ -166,7 +166,24 @@ class RLS:
 
 class PredictiveError:
 
+    '''
+    compute:
+    Computes the change in predictive error from some initial t0 up to some t when switching model dimension:
+    k --> k + 1
+    k --> k - 1
+    Starting from some inital t0 point up to some end point t
+    '''
+
     def __init__(self, y, t0, t, K, var_y):
+
+        '''
+            t0: Starting data point
+            t: Ending data point (total # of data used t-t0)
+            K: Number of total available features
+            var_y: Noise variance
+            y: All available data
+        '''
+
         self.t0 = t0
         self.t = t
         self.K = K
@@ -175,15 +192,28 @@ class PredictiveError:
 
     # PREDICTIVE ERROR 
     def compute(self, Hk, k):
+
+        '''
+        Hk: Feature matrix up to (including) time t and features k+1
+        k: Dimension of present model
+
+        Note that:
+         if computing a model down, input Hk including the feature needed to be removed in the last column
+        and k as (k-1).
+        If computing a model up, input Hk including the feature needed to be added in the last column, and k as k
+
+        '''
+
+        # Time start and end
         t0 = self.t0
         t = self.t
 
         # START k x k
-        Dk = la.inv(Hk[:t0, :k].T @ Hk[:t0, :k])
+        Dk = np.linalg.inv(Hk[:t0, :k].T @ Hk[:t0, :k])
         theta_k = Dk @ Hk[:t0, :k].T @ self.y[:t0]
         theta_k = theta_k.reshape(len(theta_k), 1)
 
-        # Update to k+1 x k+1ol..............................9
+        # Update to k+1 x k+1 ..............................
         model_up = ORLS(theta_k, Dk, self.y[:t0], Hk, self.K)
         theta_kk, Dkk, _, _ = model_up.ascend(0)
 
@@ -191,16 +221,18 @@ class PredictiveError:
         G = 0
         THETA = theta_k
 
+        # Create time instance at t0 to RLS update up to t
         model_k = RLS(theta_k, Dk)
         model_kk = RLS(theta_kk, Dkk)
 
         # Time increments
         for i in range(t0, t):
-            # Compute Ai
-            A = Hk[i, :k] @ (-Dkk[:k, k] / Dkk[k, k]) - Hk[i, k]
+
+            # Compute Qi
+            Q = Hk[i, :k] @ (-Dkk[:k, k] / Dkk[k, k]) - Hk[i, k]
 
             # Compute Gi
-            G = np.hstack([G, A * theta_kk[-1]])
+            G = np.hstack([G, Q * theta_kk[-1]])
 
             # Store THETAs using t0 elements
             THETA = np.hstack([THETA, theta_k])
@@ -211,9 +243,9 @@ class PredictiveError:
 
         # Residual error (ignore initialized element in THETA)
         temp = Hk[t0:t, :k] * THETA[:, :][:, 1:].T
-        E = (self.y[t0:t] - np.sum(temp, axis=1)).reshape(t - t0, 1)
+        E = (self.y[t0:t] - np.sum(temp, axis=1)).reshape(t-t0, 1)
 
-        # Ignore initialized element, and reshape
-        G = G[1:].reshape(t - t0, 1)
+        # Ignore initialized element in G, and reshape
+        G = G[1:].reshape(t-t0, 1)
 
         return G, E

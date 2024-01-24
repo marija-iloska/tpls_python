@@ -111,11 +111,14 @@ def generate_data(K: int, p: int, T: int, var_h: float, var_t: float):
     theta = np.random.normal(0, var_t, (K, 1))
 
     # Choose indices to set to 0
-    idx = np.random.choice(np.arange(K), K-p, replace=False)
+    all_idx = np.arange(K)
+    idx = np.random.choice(all_idx, K-p, replace=False)
     theta[idx] = 0
 
     # Create data without noise
     y = H @ theta
 
-    return y, H, theta, idx
+    # Returns indices of nonzero values in theta
+
+    return y, H, theta, np.setdiff1d(all_idx, idx)
 

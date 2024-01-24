@@ -1,6 +1,5 @@
 import numpy as np
 
-
 # SCAN OVER ALL FEATURES ================================================================================
 class ModelJump:
 
