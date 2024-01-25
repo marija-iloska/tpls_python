@@ -203,6 +203,7 @@ class jumpPLS:
         self.selected_features_idx = self.sorted_features_idx[:self.k]
 
 
+
     # TIME UPDATE WITH NEW DATA (FIXED MODEL)-  -------------------------------------------------------------
     def time_update(self, data_t: float,  features_t: np.ndarray):
 

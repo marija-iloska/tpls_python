@@ -1,4 +1,5 @@
 import numpy as np
+import util
 
 # ORDER RECURSIVE LEAST SQUARES ==========================================================
 class ORLS:
@@ -249,3 +250,90 @@ class PredictiveError:
         G = G[1:].reshape(t-t0, 1)
 
         return G, E
+
+
+
+class Expectations:
+
+    def __init__(self, y, H, start_time, end_time, num_available_features, true_features, noise_variance):
+
+        self.t0 = start_time
+        self.t = end_time
+        self.K = num_available_features
+        self.var_y = noise_variance
+        self.idx = true_features
+        self.p = len(true_features)
+        self.all_idx = np.arange(self.K)
+        self.y = y
+
+        # ORDER true features in the beginning
+        self.H = H[:, np.append(self.idx, np.setdiff1d(self.all_idx, self.idx))]
+        self.theta, self.D, _ = util.initialize([self.y[:self.t0+1], self.H[:self.t0+1,:], self.all_idx[:self.p]])
+
+
+
+    def model_up(self):
+
+        model_up = ORLS(self.theta, self.D, self.y[:self.t0], self.H[:self.t0, :], self.K)
+        model_k = RLS(self.theta, self.D)
+
+        p = self.p
+        y = self.y
+        H = self.H
+        Es_add = np.zeros((1, self.K - p))
+
+        for i in range(self.t0+1, self.t):
+            
+            Es_j = np.array([])
+            # ADDITION == == == == == == == == == == == == == == == == == == == == == == == == == =
+            for j in range(self.K - p):
+
+                # Get D(p+1, t-1)
+                _, Dpp, _, _ = model_up.ascend(j)
+
+                # Get Q
+                q_add = H[i, p + j] + H[i, :p] @ (Dpp[:p, -1] / Dpp[-1,-1])
+
+                # Expectation single batch
+                # E(p + 1) - E(p)
+                Es_j = np.append( Es_j, self.var_y * q_add**2*Dpp[-1, -1])
+
+            self.theta, self.D = model_k.ascend(y[i], H[i, :p], self.var_y)
+            Es_add = np.vstack((Es_add, Es_j))
+
+        return Es_add[1:, :].T
+
+    def model_down(self):
+
+        p = self.p
+        y = self.y
+        H = self.H
+        Es_rmv = np.zeros((1,p))
+        model_k = RLS(self.theta, self.D)
+        # REMOVAL  == == == == == == == == == == == == == == == == == == == == == == == == == =
+
+        for i in range(self.t0+1, self.t):
+            Es_j = np.array([])
+            for j in range(p):
+
+                idx = np.setdiff1d(self.all_idx[:p], j)
+
+                Dswap = np.empty((p, p))
+                Dswap[:p - 1, :][:, :p - 1] = self.D[idx, :][:, idx]
+                Dswap[p - 1, :p-1] = self.D[j, idx]
+                Dswap[:, p-1] = self.D[np.append(idx, j), j]
+
+                # D(p + 1, t - 1)
+                q_rmv = H[i,j] + H[i, idx] @ (Dswap[:p-1, -1] / Dswap[-1, -1])
+
+                # Expectation
+                # E(p + 1) - E(p)
+                Es_j = np.append(Es_j, q_rmv**2 * (self.theta[j]**2 - self.var_y * Dswap[-1,-1]))
+
+            self.theta, self.D = model_k.ascend(y[i], H[i, :p], self.var_y)
+            Es_rmv = np.vstack( (Es_rmv,Es_j))
+        
+        return Es_rmv[1:, :].T
+    
+    def batch(self, single_mse):         
+        return np.sum(single_mse, axis = 1)
