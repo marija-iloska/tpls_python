@@ -255,24 +255,46 @@ class PredictiveError:
 
 class Expectations:
 
+    """Computes the MSE difference of the neighbor models above and below the true model.
+        Here we assume we have the true features and value of the parameter theta, and can run
+        these experiments for theoretical analysis.
+
+        Single instant: E_{-j,n} - E_{p,n}  - for removing feature j at time t_n
+        Single instant: E_{+j,n} - E_{p,n} - for adding feature j at time t_n
+        In Batch: Sum of Single instants
+    """
+
     def __init__(self, y, H, start_time, end_time, num_available_features, true_features, noise_variance):
 
+        """ Define system:
+        y,H: input-ouptut data pair
+        start_time: the number of initial data points used before the algorithm started.
+        end_time: the number of the data point you wish to compute MSE difference for
+        true_features: the indices of the features used to generate the true model
+        noise_variance: the variance of the observation noise
+        """
+
+        self.y = y
         self.t0 = start_time
         self.t = end_time
         self.K = num_available_features
         self.var_y = noise_variance
         self.idx = true_features
+
+        # True dimension
         self.p = len(true_features)
+
+        # An array with all indices
         self.all_idx = np.arange(self.K)
-        self.y = y
 
         # ORDER true features in the beginning
         self.H = H[:, np.append(self.idx, np.setdiff1d(self.all_idx, self.idx))]
-        self.theta, self.D, _ = util.initialize([self.y[:self.t0+1], self.H[:self.t0+1,:], self.all_idx[:self.p]])
+        self.theta, self.D, _ = util.initialize([y[:self.t0+1], self.H[:self.t0+1,:], self.all_idx[:self.p]])
 
 
 
     def model_up(self):
+
 
         model_up = ORLS(self.theta, self.D, self.y[:self.t0], self.H[:self.t0, :], self.K)
         model_k = RLS(self.theta, self.D)
