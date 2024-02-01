@@ -5,11 +5,11 @@ import matplotlib.pyplot as plt
 import LS_updates as ls
 
 # DATA SETTINGS =======================================================
-T = 300  # Time series length
-K = 10  # Total available features
-p = 6  # True model order
-var_y = 1  # Observation noise variance
-var_h = 0.5  # Feature noise variance
+T = 700  # Time series length
+K = 8  # Total available features
+p = 4  # True model order
+var_y = 2  # Observation noise variance
+var_h = 1  # Feature noise variance
 var_t = 0.5  # Theta noise variance
 
 # SYNTHETIC DATA
@@ -63,7 +63,7 @@ for t in range(t0+1, T):
     # Predictive Error store
     J_pred = np.append(J_pred, jfit.PredError)
     
-    
+
 mse = ls.Expectations(y, H, t0, T, K, idx, var_y)
 
 Ed = mse.model_down()
@@ -81,7 +81,7 @@ for i in range(Ed.shape[0]):
     plt.plot( np.arange(t0+1,T), Ed[i, :])
 plt.show()
 
-    
+
 plt.plot(J_pred, linewidth=3, color='#A52A2A', label='JPLS')
 plt.xlabel('Time', fontsize=14)
 plt.ylabel('Predictive Error', fontsize=14)
@@ -91,25 +91,39 @@ plt.legend(fontsize=12)
 plt.show()
 
 
-# jpls = np.array([correct, incorrect, missing])
-#
-# # Create a stacked bar plot
-# jb = plt.bar(np.arange(t0, T + 1), jpls.T, stacked=True, color=['#B30000', 'black', '#999999'], alpha=1)
-#
-# # Highlight True Order using yline
-# plt.axhline(p, color='b', linewidth=5)
-#
-# # Set axis limits and labels
-# plt.ylim(0, K)
-# plt.xlabel('Time', fontsize=15)
-# plt.ylabel('Number of Features', fontsize=15)
-# plt.title('JPLS', fontsize=15)
-#
-# # Set legend and font size
-# plt.legend(['Correct', 'Incorrect', 'Missing', 'True Order'], fontsize=15)
-#
-# # Set tick font size
-# plt.tick_params(axis='both', labelsize=15)
+jpls = np.array([correct, incorrect])
 
 
+import matplotlib.pyplot as plt
+import numpy as np
 
+
+time_range = tuple(range(t0+1, T))
+
+weight_counts = {
+    "Correct": np.array(correct),
+    "Incorrect": np.array(incorrect),
+}
+width = 0.9
+
+fig, ax = plt.subplots()
+bottom = np.zeros(len(time_range))
+cols = ['mediumvioletred', 'lightgrey']
+i = 0
+for boolean, weight_count in weight_counts.items():
+    pb = ax.bar(time_range, weight_count, width, label=boolean, bottom=bottom, color = cols[i])
+    bottom += weight_count
+    i+=1
+
+plt.axhline(y=p, color='black', linestyle='--', label='Horizontal Line', linewidth = 3)
+ax.set_title("JPLS", fontsize = 16)
+ax.set_xlabel('Time', fontsize = 14)
+ax.set_ylabel('Number of Features', fontsize = 14)
+ax.legend(loc="upper right")
+plt.ylim(0, K)
+
+plt.show()
+
+
+plt.plot(J_pred)
+plt.show()
