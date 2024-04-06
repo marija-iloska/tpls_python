@@ -358,4 +358,4 @@ class Expectations:
         return Es_rmv[1:, :].T
     
     def batch(self, single_mse):         
-        return np.sum(single_mse, axis = 1)
+        return np.cumsum(single_mse, axis = 1)
