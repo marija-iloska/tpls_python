@@ -99,7 +99,7 @@ class ModelJump:
 
 
 # JUMP PREDICTIVE LEAST SQUARES - One time step in ALGORITHM 4 ======================================================
-class jumpPLS:
+class JPLS:
     
     ''' Algorithm step that finds best model as we collect data point.
     Uses ModelJump class to scan over features, get predictive error and decide model

@@ -1,6 +1,7 @@
 
 # IMPORTS
 import numpy as np
+import matplotlib.pyplot as plt
 
 ''' Functions used often in the implementation
 
@@ -122,3 +123,31 @@ def generate_data(K: int, p: int, T: int, var_h: float, var_t: float):
 
     return y, H, theta, np.setdiff1d(all_idx, idx)
 
+    # FEATURES BAR PLOT =========================================================================
+def bar_plot(correct: np.ndarray, incorrect: np.ndarray, t0: int, T: int, p: int, K:int):
+    time_range = tuple(range(t0 + 1, T))
+
+    # Number of features
+    weight_counts = {
+        "Correct": np.array(correct),
+        "Incorrect": np.array(incorrect),
+    }
+    # Bar width
+    width = 0.9
+
+    fig, ax = plt.subplots()
+    bottom = np.zeros(len(time_range))
+    cols = ['mediumvioletred', 'lightgrey']
+    i = 0
+    for boolean, weight_count in weight_counts.items():
+        pb = ax.bar(time_range, weight_count, width, label=boolean, bottom=bottom, color=cols[i])
+        bottom += weight_count
+        i += 1
+
+    plt.axhline(y=p, color='black', linestyle='--', label='Horizontal Line', linewidth=3)
+    ax.set_title("JPLS", fontsize=16)
+    ax.set_xlabel('Time', fontsize=14)
+    ax.set_ylabel('Number of Features', fontsize=14)
+    ax.legend(loc="upper right")
+    plt.ylim(0, K)
+    plt.show()
