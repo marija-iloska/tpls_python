@@ -119,6 +119,7 @@ class ORLS:
         return theta, D, idx_H, Hk
 
 
+# RECURSIVE LEAST SQUARES ==========================================================
 class RLS:
 
     def __init__(self, theta, D):
@@ -133,6 +134,7 @@ class RLS:
         self.D = D
         self.k = len(theta)
 
+    # ASCENDING STEP -----------------------------------------------------------------------
     def ascend(self, y_n: float, h_n: np.ndarray, var_y: float):
         '''
         Args:
@@ -163,8 +165,7 @@ class RLS:
 
         return self.theta, self.D
 
-
-
+# PREDICTIVE ERROR -----------------------------------------------------------------------
 class PredictiveError:
 
     '''
@@ -191,7 +192,7 @@ class PredictiveError:
         self.var_y = var_y
         self.y = y[:t + 1]
 
-    # PREDICTIVE ERROR 
+    # COMPUTE -----------------------------------------------------------------------  
     def compute(self, Hk, k):
 
         '''
@@ -252,7 +253,7 @@ class PredictiveError:
         return G, E
 
 
-
+# REGRET ANALYSIS -----------------------------------------------------------------------
 class Expectations:
 
     """Computes the MSE difference of the neighbor models above and below the true model.
@@ -292,7 +293,7 @@ class Expectations:
         self.theta, self.D, _ = util.initialize([y[:self.t0+1], self.H[:self.t0+1,:], self.all_idx[:self.p]])
 
 
-
+    # EXPECTATION MOVING UP -----------------------------------------------------------------------
     def model_up(self):
 
 
@@ -325,6 +326,7 @@ class Expectations:
 
         return Es_add[1:, :].T
 
+    # EXPECTATION MOVING DOWN -----------------------------------------------------------------------
     def model_down(self):
 
         p = self.p
@@ -356,6 +358,7 @@ class Expectations:
             Es_rmv = np.vstack( (Es_rmv,Es_j))
         
         return Es_rmv[1:, :].T
-    
+   
+    # COMPUTE EXPECTATION IN BATCH ----------------------------------------------------------------------- 
     def batch(self, single_mse):         
         return np.cumsum(single_mse, axis = 1)
