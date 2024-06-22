@@ -145,7 +145,7 @@ def bar_plot(correct: np.ndarray, incorrect: np.ndarray, t0: int, T: int, p: int
         i += 1
 
     plt.axhline(y=p, color='black', linestyle='--', label='Horizontal Line', linewidth=3)
-    ax.set_title("JPLS", fontsize=16)
+    ax.set_title("TPLS", fontsize=16)
     ax.set_xlabel('Time', fontsize=14)
     ax.set_ylabel('Number of Features', fontsize=14)
     ax.legend(loc="upper right")
